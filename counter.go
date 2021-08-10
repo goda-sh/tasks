@@ -1,18 +1,12 @@
 package tasks
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strconv"
 
 	"github.com/go-redis/redis/v8"
 	"pkg.goda.sh/utils"
-)
-
-var (
-	RedisClient *redis.Client
-	RedisCTX    = context.Background()
 )
 
 // Counter implements Atomic counters for HTTP hooks

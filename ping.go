@@ -6,16 +6,21 @@ import (
 	"time"
 
 	"github.com/go-ping/ping"
+	"pkg.goda.sh/utils"
 )
 
 // Ping sends ICMP requests to a specific target host
 func Ping(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	pinger, err := ping.NewPinger(args.Task.Params["target"].(string))
+	params := utils.ParamsParser(args.Task.Params, utils.DefaultParams{
+		"count": 3,
+		"high":  75,
+	})
+	pinger, err := ping.NewPinger(params.Get("target").String())
 	if err != nil {
 		result.Error = err
 	}
-	pinger.Count = int(args.Task.Params["count"].(float64))
+	pinger.Count = int(params.Get("count").Int64())
 	pinger.SetPrivileged(true)
 	err = pinger.Run() // Blocks until finished.
 	if err != nil {
@@ -24,9 +29,7 @@ func Ping(args *TaskArgs) Result {
 	if result.Error == nil {
 		pinged := pinger.Statistics()
 		avg := int(pinged.AvgRtt / time.Millisecond)
-		if high, ok := args.Task.Params["high"].(float64); ok {
-			result.Warn = avg >= int(high)
-		}
+		result.Warn = avg >= int(params.Get("high").Int64())
 		if pinged.PacketLoss > 0 {
 			result.Warn = true
 		}
@@ -58,14 +61,21 @@ func Ping(args *TaskArgs) Result {
 func FakePing(args *TaskArgs) Result {
 	result := NewResult(args.Task)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	mm := args.Task.Params["range"].([]interface{})
-	min := int(mm[0].(float64))
-	max := int(mm[1].(float64))
+	params := utils.ParamsParser(args.Task.Params, utils.DefaultParams{
+		"high":  75,
+		"range": []int64{
+			1, 100,
+		},
+	})
+	high := int(params.Get("high").Int64())
+	mm := params.Get("range").Ints()
+	min := int(mm[0])
+	max := int(mm[1])
 	recv := r.Intn(max-min) + min
 	avg := int(time.Duration((r.Intn(max-min)+min)*1000) / time.Microsecond)
-	result.Warn = avg >= int(args.Task.Params["high"].(float64))
+	result.Warn = avg >= high
 	loss := 0
-	if r.Intn(100) >= 75 {
+	if r.Intn(100) >= high {
 		loss = max - recv
 	}
 	if loss > 0 {

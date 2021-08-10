@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+	"pkg.goda.sh/utils"
 )
 
-type Item struct {
+type item struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Link        string `json:"link"`
@@ -19,34 +20,33 @@ type Item struct {
 // Feed pulls different types of RSS feeds
 func Feed(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	limit := 5
-	if args.Task.Params["limit"] != nil {
-		limit = int(args.Task.Params["limit"].(float64))
-	}
+	params := utils.ParamsParser(args.Task.Params, utils.DefaultParams{
+		"limit": 5,
+	})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	fp := gofeed.NewParser()
 	fp.UserAgent = fmt.Sprintf("%s/%s", Project, Version)
-	feed, err := fp.ParseURLWithContext(args.Task.Params["url"].(string), ctx)
+	feed, err := fp.ParseURLWithContext(params.Get("url").String(), ctx)
 	if err != nil {
 		result.Error = err
 	} else {
-		items := []Item{}
-		for _, item := range feed.Items {
-			items = append(items, Item{
-				Title:       item.Title,
-				Description: item.Description,
-				Link:        item.Link,
-				Published:   item.Published,
+		items := []item{}
+		for _, i := range feed.Items {
+			items = append(items, item{
+				Title:       i.Title,
+				Description: i.Description,
+				Link:        i.Link,
+				Published:   i.Published,
 			})
-			if limit <= len(items) {
+			if int(params.Get("limit").Int64()) <= len(items) {
 				break
 			}
 		}
 		result.Update = struct {
 			Title       string `json:"title"`
 			Description string `json:"description"`
-			Items       []Item `json:"items"`
+			Items       []item `json:"items"`
 		}{
 			Title:       feed.Title,
 			Description: feed.Description,
@@ -68,13 +68,13 @@ func FakeFeed(args *TaskArgs) Result {
 	if err != nil {
 		result.Error = err
 	} else {
-		items := []Item{}
-		for _, item := range feed.Items {
-			items = append(items, Item{
-				Title:       item.Title,
-				Description: item.Description,
-				Link:        item.Link,
-				Published:   item.Published,
+		items := []item{}
+		for _, i := range feed.Items {
+			items = append(items, item{
+				Title:       i.Title,
+				Description: i.Description,
+				Link:        i.Link,
+				Published:   i.Published,
 			})
 			if limit <= len(items) {
 				break
@@ -83,7 +83,7 @@ func FakeFeed(args *TaskArgs) Result {
 		result.Update = struct {
 			Title       string `json:"title"`
 			Description string `json:"description"`
-			Items       []Item `json:"items"`
+			Items       []item `json:"items"`
 		}{
 			Title:       feed.Title,
 			Description: feed.Description,

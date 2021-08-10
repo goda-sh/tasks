@@ -5,20 +5,21 @@ import (
 	"math/rand"
 	"net"
 	"time"
+
+	"pkg.goda.sh/utils"
 )
 
 // Port checks if a port is open on a target host
 func Port(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	method := "tcp"
-	timeout := 10
-	if m, ok := args.Task.Params["method"].(string); ok {
-		method = m
-	}
-	if t, ok := args.Task.Params["timeout"].(float64); ok {
-		timeout = int(t)
-	}
-	conn, err := net.DialTimeout(method, args.Task.Params["target"].(string), time.Duration(timeout)*time.Second)
+	params := utils.ParamsParser(args.Task.Params, utils.DefaultParams{
+		"method":  "tcp",
+		"timeout": 10,
+	})
+	method := params.Get("method").String()
+	target := params.Get("target").String()
+	timeout := params.Get("timeout").Int64()
+	conn, err := net.DialTimeout(method, target, time.Duration(timeout)*time.Second)
 	if err != nil {
 		result.Error = err
 	} else if conn != nil {

@@ -6,12 +6,13 @@ import (
 	"regexp"
 
 	"github.com/tidwall/gjson"
+	"pkg.goda.sh/utils"
 )
 
 // HTTP pulls content from a web server
 func HTTP(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	req, client := CreateRequest("GET", args.Task.Params["url"].(string), nil)
+	req, client := CreateRequest("GET", utils.ParamsParser(args.Task.Params).Get("url").String(), nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		result.Error = err
@@ -39,7 +40,8 @@ func HTTP(args *TaskArgs) Result {
 // HTTPStatus gets the status code from a web server
 func HTTPStatus(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	req, client := CreateRequest("HEAD", args.Task.Params["url"].(string), nil)
+	params := utils.ParamsParser(args.Task.Params)
+	req, client := CreateRequest("HEAD", params.Get("url").String(), nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		result.Error = err
@@ -49,11 +51,11 @@ func HTTPStatus(args *TaskArgs) Result {
 			result.Error = err
 		} else {
 			valid := false
-			codes := args.Task.Params["codes"].([]interface{})
+			codes := params.Get("codes").Ints()
 			if len(codes) == 1 {
-				valid = resp.StatusCode == int(codes[0].(float64))
+				valid = resp.StatusCode == int(codes[0])
 			} else {
-				valid = resp.StatusCode >= int(codes[0].(float64)) && resp.StatusCode <= int(codes[1].(float64))
+				valid = resp.StatusCode >= int(codes[0]) && resp.StatusCode <= int(codes[1])
 			}
 			result.Warn = !valid
 			if result.Warn {
@@ -72,7 +74,8 @@ func HTTPStatus(args *TaskArgs) Result {
 // HTTPJSON lets you parse JSON on a remote web host
 func HTTPJSON(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	req, client := CreateRequest("GET", args.Task.Params["url"].(string), nil)
+	params := utils.ParamsParser(args.Task.Params)
+	req, client := CreateRequest("GET", params.Get("url").String(), nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		result.Error = err
@@ -82,7 +85,7 @@ func HTTPJSON(args *TaskArgs) Result {
 		if err != nil {
 			result.Error = err
 		} else {
-			value := gjson.Get(string(contents), args.Task.Params["query"].(string)).String()
+			value := gjson.Get(string(contents), params.Get("query").String()).String()
 			l := len(value) == 0
 			result.Warn = l || !(resp.StatusCode >= 200 && resp.StatusCode <= 299)
 			if result.Warn {
@@ -106,7 +109,8 @@ func HTTPJSON(args *TaskArgs) Result {
 // HTTPREGEXP lets you parse HTML with REGEXP
 func HTTPREGEXP(args *TaskArgs) Result {
 	result := NewResult(args.Task)
-	req, client := CreateRequest("GET", args.Task.Params["url"].(string), nil)
+	params := utils.ParamsParser(args.Task.Params)
+	req, client := CreateRequest("GET", params.Get("url").String(), nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		result.Error = err
@@ -116,7 +120,7 @@ func HTTPREGEXP(args *TaskArgs) Result {
 		if err != nil {
 			result.Error = err
 		} else {
-			if regex, ok := args.Task.Params["regex"].(string); ok {
+			if regex := params.Get("regex").String(); len(regex) > 0 {
 				content := string(contents)
 				matcher, err := regexp.Compile(regex)
 				if err != nil {

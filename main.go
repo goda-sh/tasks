@@ -14,10 +14,14 @@ import (
 )
 
 var (
-	Project     = "GoDash"
-	Version     = "0.0.0-beta.0"
-	CDN         = ""
+	// Project is set at compile time, used for User-Agent in HTTP requests
+	Project = "GoDash"
+	// Version is set at compile time, used for User-Agent in HTTP requests
+	Version = "0.0.0-beta.0"
+	// TaskMapping is used to map different versions of a task to a table section
+	// within the GoDash UI
 	TaskMapping = map[string][]string{}
+	// TaskRunners defines the different types of tasks for the task runner
 	TaskRunners = map[string]Type{
 		"port":          {Port, "port", false},
 		"fakeport":      {FakePort, "port", false},
@@ -46,7 +50,7 @@ func init() {
 	}
 }
 
-// Task is the Job
+// Task defines each job passed to the task runner
 type Task struct {
 	Label     string                 `json:"label"`
 	Interval  string                 `json:"interval"`
@@ -64,7 +68,7 @@ type Task struct {
 	Cancel    func() bool            `json:"-"`
 }
 
-// CleanTask is for JSON converting
+// CleanTask is for JSON marshaling, removing hidden params
 type CleanTask struct {
 	Label     string                 `json:"label"`
 	Interval  string                 `json:"interval"`
@@ -82,7 +86,7 @@ type CleanTask struct {
 	Cancel    func() bool            `json:"-"`
 }
 
-// Hash is used to create task hashes
+// Hash is used to create task hashes for task IDs
 type Hash struct {
 	Label    string `json:"label"`
 	Interval string `json:"interval"`
@@ -92,13 +96,13 @@ type Hash struct {
 	Machine  string `json:"machine,omitempty"`
 }
 
-// Spark is a value and warn flag for the UI
+// Spark is a sparkline number and warn flag for the UI
 type Spark struct {
 	Value interface{} `json:"value,omitempty"`
 	Warn  bool        `json:"warn,omitempty"`
 }
 
-// Result is the results from a task
+// Result is the results from a task execution
 type Result struct {
 	Task         string      `json:"task"`
 	Label        string      `json:"label"`
