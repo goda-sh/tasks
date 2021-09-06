@@ -62,7 +62,7 @@ func FakePing(args *TaskArgs) Result {
 	result := NewResult(args.Task)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	params := utils.ParamsParser(args.Task.Params, utils.DefaultParams{
-		"high":  75,
+		"high": 75,
 		"range": []int64{
 			1, 100,
 		},
