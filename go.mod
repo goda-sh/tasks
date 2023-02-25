@@ -14,7 +14,7 @@ require (
 	github.com/tidwall/gjson v1.9.0
 	github.com/tidwall/pretty v1.2.0 // indirect
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
-	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	pkg.goda.sh/utils v1.0.0-beta.1
 )
 
